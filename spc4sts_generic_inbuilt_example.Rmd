@@ -1,0 +1,134 @@
+
+---
+## title: "Explained spc4sts: Statistical Process Control for Stochastic Textured Surfaces in R"
+```{r}
+
+library(EBImage)
+library(keras)
+require(spc4sts)
+require(tiff)
+##Simulating STS images using SarGen()
+set.seed(1)
+fig1_1 <- sarGen(phi1=.6, phi2=.35, sigma=.01, m=250, n=250)
+fig1_2 <- sarGen(phi1=.6, phi2=.35, sigma=.01, m=250, n=250) 
+
+## Inducing Image with imposeDefect()
+set.seed(3)
+img2<- sarGen(phi1=.6, phi2=.35, sigma=.01, m=250, n=250)
+set.seed(30)
+img3<- imposeDefect(img2, loc=NULL, a=4, b=10, phi1=0, phi2=0, sigma=0.01)$img
+## Here the loc=NULL hence the location of defect is random.
+## I am not sure how to put 'loc' values into the code.
+
+```
+## To generate Image with Global change : 
+## change the process parameters.
+```{r}
+
+fig3_1 <- sarGen(phi1=.6, phi2=.35, sigma=.01, m=250, n=250)
+fig3_2 <- sarGen(phi1=.35, phi2=.6, sigma=.01, m=250, n=250)
+
+```
+
+#STS image modeled in a generic manner based on supervised learning
+```{r}
+set.seed(11)
+model <- surfacemodel(img=fig1_1, nb=1, xval=5,keep.residuals=TRUE, stationary.test=TRUE)
+model
+```
+
+## Monitoring has 3 main steps
+## 1) Model (which is done) & Capture IN Control surface behavior
+## 2) Establish control limits
+## 3) compute the monitoring statistic using monitoringStat()
+
+## Fitting Model
+
+```{r}
+set.seed(11)
+model<-surfacemodel(img=fig1_1, nb=1, keep.residuals = TRUE, stationary.test = TRUE)
+model
+```
+
+## simulate 20 new IC images and find climit object which
+## contains all the information needed for local defect monitoring.
+```{r}
+set.seed(2)
+imgs <- array(0, c(250, 250, 20))
+for (j in 1:dim(imgs)[3]) {imgs[,,j]<-sarGen(phi1=.6, phi2=.35, sigma=.01, m=250, n=250)}
+cl<- climit(imgs, fa.rate=0.05, model, type=1, stat='ad', w=5, nD=10)
+cl
+```
+
+#simulate 10 image for local monitoring.
+#Here 5 images are similar IC(like fig1_1) and 5 contains local defects
+```{r}
+set.seed(22)
+imgs1 <- array(0, c(250, 250, 10))
+for (j in 1:dim(imgs1)[3]) imgs1[ , , j] <- sarGen(phi1=.6, phi2=.35)
+imgs1_ld <- imgs1
+for (j in 6:10) imgs1_ld[ , , j]<-imposeDefect(imgs1[ , , j])$img
+```
+
+
+#compute monitoring stats
+```{r}
+ls1_ld <- vector('numeric', 10)
+for (j in 1:10) ls1_ld[j] <- monitoringStat(img=imgs1_ld[ , , j], model=model, cl=cl)$localStat
+```
+
+#Plot control charts for local defect monitoring 
+```{r}
+par(mar=c(2.5, 2.5, 1,1), mgp=c(1.5, 0.5, 0))
+plotcc(statsII = ls1_ld, CL=cl$localStat$control.limit, statsI = cl$localStat$PIstats)
+```
+
+
+#dignoseLD(): produces binary image that highlights regions with potential defects for the given image
+```{r}
+ls2<- monitoringStat(img=img3, model=model, cl=cl)
+bimg<- diagnoseLD(ms=ls2, dth=cl$diagnostic.threshold)
+```
+
+#global change
+## reuse the model fitted.In the second step, we reuse the set
+## of 20 Phase I IC images imgs to establish the CL.
+
+```{r}
+cl2<- climit(imgs=imgs, fa.rate=.05, model=model, type=2)
+cl2
+```
+
+## Monitoring Global change
+## Reuse 5 Phase 2 IC images and generate 5 OC Phase 2 images 
+## with global change by reducing their phi1 and phi2.
+
+```{r}
+set.seed(66)
+imgs1_gc <- imgs1
+for (j in 6:10) imgs1_gc[ , , j] <- sarGen(phi1 =0.6*0.99, phi2= 0.35*0.99)
+ls1_gc <- vector('numeric', 10)
+for (j in 1:10) ls1_gc[j] <- monitoringStat(img=imgs1_gc[ , , j], model=model, cl=cl2)$globalStat
+
+```
+
+#plotting global chaanges: 
+```{r}
+par(mar= c(2.5, 2.5, 1, 1), mgp= c(1.5, 0.5, 0))
+plotcc(statsII = ls1_gc, CL=cl2$globalStat$control.limit.ecdf, statsI = cl2$globalStat$PIstats)
+
+```
+
+#Computing pairwise dissimilarity matrices of STS
+#This matrices can be used for different ML tasks like clustering,
+##Classification, outliner detection and manifold learning.
+```{r}
+
+imgs1_pd<-imgs1
+imgs1_pd[ , ,10] <-fig3_2
+print(disMat(imgs1_pd, nb=1, cp=1e-3, subsample= c(0.5, 0.25)), digits=2)$KL
+```
+
+
+
+
