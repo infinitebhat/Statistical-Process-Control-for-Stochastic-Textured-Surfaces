@@ -9,4 +9,4 @@ Stochastic textured surface (STS) data are increasingly common in many quality c
 
 ### Full published paper available at : https://www.researchgate.net/publication/337992096_spc4sts_Statistical_Process_Control_for_Stochastic_Textured_Surfaces_in_R
 
-This is purely for educational purpose and I do not own any rights of code or any other related things.
+This is purely for educational purpose/part of research project literature survey and I do not own any rights of code or any other related things.
