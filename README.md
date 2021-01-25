@@ -1,6 +1,4 @@
 # Statistical-Process-Control-for-Stochastic-Textured-Surfaces in R
-This R notebook based on the research paper -> spc4sts: Statistical Process Control for Stochastic Textured Surfaces in R
-Authors : Anh Tuan Buia and Daniel W. Apleyb
 
 Abstract of the paper:
 
@@ -9,4 +7,4 @@ Stochastic textured surface (STS) data are increasingly common in many quality c
 
 Full published paper available at : https://www.researchgate.net/publication/337992096_spc4sts_Statistical_Process_Control_for_Stochastic_Textured_Surfaces_in_R
 
-This is purely for educational purpose/part of research project literature survey and I do not own any rights of code or any other related things.
+This is purely for educational purpose. For any commercial use please contact the original authors Anh Tuan Buia and Daniel W. Apleyb. This R notebook based on the research paper -> spc4sts: Statistical Process Control for Stochastic Textured Surfaces in R
